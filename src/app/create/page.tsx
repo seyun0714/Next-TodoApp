@@ -3,6 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import styles from "./page.module.scss";
 import LabelCalendar from "@/components/common/calendar/LabelCalendar";
+import BasicBoard from "@/components/common/board/BasicBoard";
 
 function page() {
   return (
@@ -37,7 +38,7 @@ function page() {
         </div>
       </header>
       <main className={styles.container__body}>
-        <div className={styles.container__body__infoBox}>
+        {/* <div className={styles.container__body__infoBox}>
           <span className={styles.title}>There is no board yet.</span>
           <span className={styles.subtitle}>
             Click the button and start flashing!
@@ -51,7 +52,8 @@ function page() {
               color="bg-orange-500"
             />
           </button>
-        </div>
+        </div> */}
+        <BasicBoard />
       </main>
     </div>
   );
