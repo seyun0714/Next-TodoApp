@@ -1,4 +1,8 @@
 "use client";
+import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { supabase } from "@/utils/supabase";
+// shadcn UI
 import {
   Dialog,
   DialogContent,
@@ -12,17 +16,89 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
+// component
 import MDEditor from "@uiw/react-md-editor";
 import LabelCalendar from "../calendar/LabelCalendar";
+//scss
 import styles from "./MarkdownDialog.module.scss";
-import { useState } from "react";
+
+interface Todo {
+  id: number;
+  title: string;
+  start_date: string | Date;
+  end_date: string | Date;
+  contents: BoardContent[];
+}
+
+interface BoardContent {
+  boardId: string | number;
+  isCompleted: boolean;
+  title: string;
+  startDate: string | Date;
+  endDate: string | Date;
+  content: string;
+}
 
 function MarkdownDialog() {
-  const [contents, setContents] = useState<string | undefined>(
+  const pathname = usePathname();
+  const [open, setOpen] = useState<boolean>(false);
+  const [title, setTitle] = useState<string>("");
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
+  const [content, setContent] = useState<string | undefined>(
     "**Hello, World!**"
   );
+
+  // ==================================================================================
+
+  // supabase에 저장
+  const onSubmit = async () => {
+    console.log(title);
+    if (!title || !startDate || !endDate || !content) {
+      toast.error("기입되지 않은 항목이 있습니다.");
+      return;
+    } else {
+      // supabase 데이터베이스에 연동
+      let { data: todos } = await supabase.from("todos").select("*");
+      if (todos !== null) {
+        todos.forEach(async (item: Todo) => {
+          if (item.id === Number(pathname.split("/")[2])) {
+            item.contents.forEach((element: BoardContent) => {
+              if (element.boardId === "BHO_4ncmhY8coGrtqJfpK") {
+                element.title = title;
+                element.startDate = startDate;
+                element.endDate = endDate;
+                element.content = content;
+              } else {
+                element.title = element.title;
+                element.startDate = element.startDate;
+                element.endDate = element.endDate;
+                element.content = element.content;
+              }
+            });
+          }
+          const { data, error, status } = await supabase
+            .from("todos")
+            .update([{ contents: item.contents }])
+            .eq("id", pathname.split("/")[2]);
+          if (error) {
+            console.error(error);
+            toast.error("오류 발생");
+          }
+          if (status === 204) {
+            toast.success("수정 완료");
+
+            // 등록 후 조건 초기화
+            setOpen(false);
+          }
+        });
+      } else return;
+    }
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
           variant={"ghost"}
@@ -40,6 +116,7 @@ function MarkdownDialog() {
                 type="text"
                 placeholder="Write a title for your board."
                 className={styles.dialog__titleBox__title}
+                onChange={(event) => setTitle(event.target.value)}
               />
             </div>
           </DialogTitle>
@@ -51,8 +128,8 @@ function MarkdownDialog() {
           <div className={styles.dialog__markdown} data-color-mode="light">
             <MDEditor
               height={100 + "%"}
-              value={contents}
-              onChange={setContents}
+              value={content}
+              onChange={setContent}
             />
           </div>
         </DialogHeader>
@@ -68,7 +145,8 @@ function MarkdownDialog() {
             </DialogClose>
             <Button
               type="submit"
-              className="font-normal border-orange-500 bg-orange-400 text-white hover:bg-orange-400 hover:text-white "
+              className="font-normal border-orange-500 bg-orange-400 text-white hover:bg-orange-400 hover:text-white"
+              onClick={onSubmit}
             >
               Done
             </Button>
