@@ -18,11 +18,16 @@ import styles from "./LabelCalendar.module.scss";
 interface Props {
   label: string;
   readonly?: boolean;
+  handleDate: (date: Date | undefined) => void;
 }
 
-function LabelCalendar({ label, readonly }: Props) {
-  const [date, setDate] = useState<Date>();
+function LabelCalendar({ label, readonly, handleDate }: Props) {
+  const [date, setDate] = useState<Date | undefined>();
 
+  const handleSelect = (selectedDate: Date | undefined) => {
+    setDate(selectedDate);
+    handleDate(selectedDate);
+  };
   return (
     <div className={styles.container}>
       <span className={styles.container__label}>{label}</span>
@@ -44,7 +49,7 @@ function LabelCalendar({ label, readonly }: Props) {
             <Calendar
               mode="single"
               selected={date}
-              onSelect={setDate}
+              onSelect={handleSelect}
               initialFocus
             />
           </PopoverContent>

@@ -13,6 +13,8 @@ import { toast } from "sonner";
 // component
 import LabelCalendar from "@/components/common/calendar/LabelCalendar";
 import BasicBoard from "@/components/common/board/BasicBoard";
+import { Input } from "@/components/ui/input";
+import { ChevronLeft } from "lucide-react";
 
 interface Todo {
   id: number;
@@ -26,18 +28,17 @@ interface BoardContent {
   boardId: string | number;
   isCompleted: boolean;
   title: string;
-  startDate: string | Date;
-  endDate: string | Date;
+  startDate: string;
+  endDate: string;
   content: string;
 }
 
 function page() {
   const router = useRouter();
   const pathname = usePathname();
-
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
   const [boards, setBoards] = useState<Todo>();
-  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
-  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
 
   // ================================================================================================
   const insertRowData = async (contents: BoardContent[]) => {
@@ -68,8 +69,8 @@ function page() {
       boardId: nanoid(),
       isCompleted: false,
       title: "",
-      startDate: new Date(),
-      endDate: new Date(),
+      startDate: "",
+      endDate: "",
       content: "",
     };
     if (boards && boards.contents.length > 0) {
@@ -100,12 +101,22 @@ function page() {
     }
   };
 
+  const handleSave = () => {};
+
   useEffect(() => {
     getData();
   }, []);
 
   return (
     <div className={styles.container}>
+      <div className="absolute top-6 left-7 flex items-center gap-2">
+        <Button variant={"outline"} size={"icon"} onClick={() => router.back()}>
+          <ChevronLeft />
+        </Button>
+        <Button variant={"outline"} onClick={handleSave}>
+          저장
+        </Button>
+      </div>
       <header className={styles.container__header}>
         <div className={styles.container__header__contents}>
           <input
@@ -123,8 +134,8 @@ function page() {
           </div>
           <div className={styles.calendarBox}>
             <div className={styles.calendarBox__calendar}>
-              <LabelCalendar label="From" readonly={false} />
-              <LabelCalendar label="To" readonly={false} />
+              <LabelCalendar label="From" handleDate={setStartDate} />
+              <LabelCalendar label="To" handleDate={setEndDate} />
             </div>
             <Button
               variant={"outline"}
@@ -151,6 +162,7 @@ function page() {
                   width={50}
                   height={50}
                   color="bg-orange-500"
+                  onClick={createBoard}
                 />
               </button>
             </div>
@@ -158,7 +170,13 @@ function page() {
         ) : (
           <div className="flex flex-col items-center justify-start w-full h-full gap-4 overflow-y-auto">
             {boards?.contents.map((board: BoardContent) => {
-              return <BasicBoard key={board.boardId} />;
+              return (
+                <BasicBoard
+                  key={board.boardId}
+                  data={board}
+                  handleBoards={setBoards}
+                />
+              );
             })}
           </div>
         )}

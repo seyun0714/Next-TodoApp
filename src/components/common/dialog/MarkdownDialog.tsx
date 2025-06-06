@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/utils/supabase";
 // shadcn UI
@@ -40,21 +40,38 @@ interface BoardContent {
   content: string;
 }
 
-function MarkdownDialog() {
+interface Props {
+  data: BoardContent;
+}
+
+function MarkdownDialog({ data }: Props) {
   const pathname = usePathname();
   const [open, setOpen] = useState<boolean>(false);
   const [title, setTitle] = useState<string>("");
-  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
-  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
+  const [isCompleted, setIsCompleted] = useState<boolean>(false);
+  const [startDate, setStartDate] = useState<Date | string | undefined>(
+    new Date()
+  );
+  const [endDate, setEndDate] = useState<Date | string | undefined>(new Date());
   const [content, setContent] = useState<string | undefined>(
     "**Hello, World!**"
   );
 
   // ==================================================================================
 
+  // useEffect(() => {
+  //   if (data) {
+  //     setTitle(data.title);
+  //     setStartDate(data.startDate);
+  //     setEndDate(data.endDate);
+  //     setContent(data.content);
+  //     setIsCompleted(data.isCompleted);
+  //   }
+  // }, []);
+
   // supabase에 저장
-  const onSubmit = async () => {
-    console.log(title);
+  const onSubmit = async (id: string | number) => {
+    console.log(id);
     if (!title || !startDate || !endDate || !content) {
       toast.error("기입되지 않은 항목이 있습니다.");
       return;
@@ -65,7 +82,7 @@ function MarkdownDialog() {
         todos.forEach(async (item: Todo) => {
           if (item.id === Number(pathname.split("/")[2])) {
             item.contents.forEach((element: BoardContent) => {
-              if (element.boardId === "BHO_4ncmhY8coGrtqJfpK") {
+              if (element.boardId === id) {
                 element.title = title;
                 element.startDate = startDate;
                 element.endDate = endDate;
@@ -99,14 +116,26 @@ function MarkdownDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant={"ghost"}
-          className="font-normal text-gray-400 hover:text-gray-500 cursor-pointer"
-        >
-          Add Contents
-        </Button>
-      </DialogTrigger>
+      {data.title ? (
+        <DialogTrigger asChild>
+          <Button
+            variant={"ghost"}
+            className="font-normal text-gray-400 hover:text-gray-500 cursor-pointer"
+          >
+            Update Contents
+          </Button>
+        </DialogTrigger>
+      ) : (
+        <DialogTrigger asChild>
+          <Button
+            variant={"ghost"}
+            className="font-normal text-gray-400 hover:text-gray-500 cursor-pointer"
+          >
+            Add Contents
+          </Button>
+        </DialogTrigger>
+      )}
+
       <DialogContent className="min-w-fit">
         <DialogHeader>
           <DialogTitle>
@@ -116,18 +145,20 @@ function MarkdownDialog() {
                 type="text"
                 placeholder="Write a title for your board."
                 className={styles.dialog__titleBox__title}
+                defaultValue={data.title ? data.title : title}
                 onChange={(event) => setTitle(event.target.value)}
               />
             </div>
           </DialogTitle>
           <div className={styles.dialog__calendarBox}>
-            <LabelCalendar label="From" />
-            <LabelCalendar label="To" />
+            <LabelCalendar label="From" handleDate={setStartDate} />
+            <LabelCalendar label="To" handleDate={setEndDate} />
           </div>
           <Separator />
           <div className={styles.dialog__markdown} data-color-mode="light">
             <MDEditor
               height={100 + "%"}
+              defaultValue={data.content ? data.content : content}
               value={content}
               onChange={setContent}
             />
@@ -146,7 +177,7 @@ function MarkdownDialog() {
             <Button
               type="submit"
               className="font-normal border-orange-500 bg-orange-400 text-white hover:bg-orange-400 hover:text-white"
-              onClick={onSubmit}
+              onClick={() => onSubmit(data.boardId)}
             >
               Done
             </Button>

@@ -7,30 +7,37 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase";
 import { toast } from "sonner";
+import { SearchBar } from "@/components/ui/search-bar";
 
 function SideNavigation() {
   const router = useRouter();
   const [todos, setTodos] = useState<any>([]);
 
   const onCreate = async () => {
-    console.log("함수 호출");
-
     // supabase 새로운 row 데이터 생성
-    const { data, error, status } = await supabase.from("todos").insert([
-      {
-        title: "",
-        start_date: "",
-        end_date: "",
-        contents: [],
-      },
-    ]);
-
+    const { data, error, status } = await supabase
+      .from("todos")
+      .insert([
+        {
+          title: "",
+          start_date: new Date(),
+          end_date: new Date(),
+          contents: [],
+        },
+      ])
+      .select();
     if (error) {
       console.error(error);
+      return;
     }
     if (status === 201) {
       toast("페이지 생성 완료");
-      router.push("/create");
+      if (data) {
+        router.push(`/create/${data[data.length - 1].id}`);
+        getTodos();
+      } else {
+        return;
+      }
     }
   };
 
@@ -53,14 +60,7 @@ function SideNavigation() {
   return (
     <div className={styles.container}>
       <div className={styles.container__searchBox}>
-        <Input
-          type="text"
-          placeholder="검색어를 입력해주세요."
-          className="focus-visible:ring-0"
-        />
-        <Button variant={"outline"} size={"icon"}>
-          <Search className="w-4 h-4" />
-        </Button>
+        <SearchBar placeholder="검색어를 입력해주세요." />
       </div>
       <div className={styles.container__buttonBox}>
         <Button
