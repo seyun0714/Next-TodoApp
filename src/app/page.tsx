@@ -1,58 +1,31 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-// scss
-import styles from "./page.module.scss";
-// supabase
-import { supabase } from "@/utils/supabase";
-// shadcn UI
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+// hook
+import { useCreateTask } from "@/hooks/apis";
+// component
+import { Button } from "@/components/ui";
 
-function Home() {
-  const router = useRouter();
-
+function InitPage() {
   // 페이지 생성 및 Supabase 연동
-  const onCreate = async () => {
-    const { data, error, status } = await supabase
-      .from("todos")
-      .insert([
-        {
-          title: "",
-          start_date: new Date(),
-          end_date: new Date(),
-          contents: [],
-        },
-      ])
-      .select();
-    if (error) {
-      console.error(error);
-      return;
-    }
-    if (status === 201) {
-      toast("페이지 생성 완료");
-      if (data) {
-        router.push(`/create/${data[data.length - 1].id}`);
-      } else {
-        return;
-      }
-    }
-  };
+  const handleCreateTask = useCreateTask();
 
   return (
-    <div className={styles.container}>
-      <div className={styles.container__onBoarding}>
-        <span className={styles.container__onBoarding__title}>
+    <div className="w-[70%] h-full flex flex-col items-center justify-center">
+      <div className="flex flex-col items-center justify-center gap-5 mb-6">
+        <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
           How To Start
-        </span>
-        <div className={styles.container__onBoarding__step}>
-          <span>1. Create a page</span>
-          <span>2. Add boards to page</span>
+        </h3>
+        <div className="flex flex-col items-center gap-3">
+          <span className="text-sm font-normal leading-none">
+            1. Create a page
+          </span>
+          <span className="text-sm font-normal leading-none">
+            2. Add boards to page
+          </span>
         </div>
         <Button
-          variant={"outline"}
-          className="w-full bg-transparent text-orange-500 border-orange-400 hover:bg-orange-50 hover:text-orange-500"
-          onClick={onCreate}
+          className="text-[#E79057] bg-transparent border border-[#E79057] hover:bg-[#FFF9F5] w-[180px]"
+          onClick={handleCreateTask}
         >
           Add New Page
         </Button>
@@ -61,4 +34,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default InitPage;

@@ -4,29 +4,32 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import styles from "./LabelCalendar.module.scss";
 
 // shadcn UI
-import { Button } from "@/components/ui";
-import { Calendar } from "@/components/ui";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui";
+import {
+  Button,
+  Calendar,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui";
 
 interface Props {
   label: string;
   readonly?: boolean;
-  handleDate: (date: Date | undefined) => void;
 }
 
-function LabelCalendar({ label, readonly, handleDate }: Props) {
+function LabelDatePicker({ label, readonly }: Props) {
   const [date, setDate] = useState<Date | undefined>();
 
   const handleSelect = (selectedDate: Date | undefined) => {
     setDate(selectedDate);
-    handleDate(selectedDate);
   };
   return (
-    <div className={styles.container}>
-      <span className={styles.container__label}>{label}</span>
+    <div className="max-w-64 flex items-center gap-3">
+      <span className="text-sm font-medium leading-none text-[#6d6d6d]">
+        {label}
+      </span>
       <Popover>
         <PopoverTrigger asChild>
           <Button
@@ -37,7 +40,7 @@ function LabelCalendar({ label, readonly, handleDate }: Props) {
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? format(date, "PPP") : <span>Pick a date</span>}
+            {date ? format(date, "PPP") : <span>날짜를 선택하세요.</span>}
           </Button>
         </PopoverTrigger>
         {!readonly && (
@@ -55,4 +58,4 @@ function LabelCalendar({ label, readonly, handleDate }: Props) {
   );
 }
 
-export default LabelCalendar;
+export { LabelDatePicker };

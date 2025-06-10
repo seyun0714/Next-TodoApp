@@ -2,6 +2,9 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/utils/supabase";
+import { toast } from "sonner";
+import MDEditor from "@uiw/react-md-editor";
+import styles from "./MarkdownDialog.module.scss";
 // shadcn UI
 import {
   Dialog,
@@ -12,16 +15,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
+} from "@/components/ui";
+import { Button } from "@/components/ui";
+import { Checkbox } from "@/components/ui";
+import { Separator } from "@/components/ui";
 // component
-import MDEditor from "@uiw/react-md-editor";
 import LabelCalendar from "../calendar/LabelCalendar";
-//scss
-import styles from "./MarkdownDialog.module.scss";
 
 interface Todo {
   id: number;
@@ -42,9 +41,10 @@ interface BoardContent {
 
 interface Props {
   data: BoardContent;
+  updateBoards: () => void;
 }
 
-function MarkdownDialog({ data }: Props) {
+function MarkdownDialog({ data, updateBoards }: Props) {
   const pathname = usePathname();
   const [open, setOpen] = useState<boolean>(false);
   const [title, setTitle] = useState<string>("");
@@ -88,10 +88,7 @@ function MarkdownDialog({ data }: Props) {
                 element.endDate = endDate;
                 element.content = content;
               } else {
-                element.title = element.title;
-                element.startDate = element.startDate;
-                element.endDate = element.endDate;
-                element.content = element.content;
+                return;
               }
             });
           }
@@ -108,6 +105,7 @@ function MarkdownDialog({ data }: Props) {
 
             // 등록 후 조건 초기화
             setOpen(false);
+            updateBoards();
           }
         });
       } else return;

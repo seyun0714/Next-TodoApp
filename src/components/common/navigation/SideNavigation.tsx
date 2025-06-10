@@ -1,97 +1,42 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import styles from "./SideNavigation.module.scss";
-import { Dot, Search } from "lucide-react";
-import React, { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/utils/supabase";
-import { toast } from "sonner";
-import { SearchBar } from "@/components/ui/search-bar";
+
+import React from "react";
+// hook
+import { useCreateTask } from "@/hooks/apis";
+// component
+import { Button, SearchBar } from "@/components/ui";
 
 function SideNavigation() {
-  const router = useRouter();
-  const [todos, setTodos] = useState<any>([]);
-
-  const onCreate = async () => {
-    // supabase 새로운 row 데이터 생성
-    const { data, error, status } = await supabase
-      .from("todos")
-      .insert([
-        {
-          title: "",
-          start_date: new Date(),
-          end_date: new Date(),
-          contents: [],
-        },
-      ])
-      .select();
-    if (error) {
-      console.error(error);
-      return;
-    }
-    if (status === 201) {
-      toast("페이지 생성 완료");
-      if (data) {
-        router.push(`/create/${data[data.length - 1].id}`);
-        getTodos();
-      } else {
-        return;
-      }
-    }
-  };
-
-  useEffect(() => {
-    getTodos();
-  }, []);
-
-  // 기존의 Supabase에 등록된 데이터 체크
-  const getTodos = async () => {
-    let {
-      data: todos,
-      error,
-      status,
-    } = await supabase.from("todos").select("*");
-    if (status === 200) {
-      setTodos(todos);
-    }
-  };
+  // Task 생성
+  const handleCreateTask = useCreateTask();
 
   return (
-    <div className={styles.container}>
-      <div className={styles.container__searchBox}>
-        <SearchBar placeholder="검색어를 입력해주세요." />
-      </div>
-      <div className={styles.container__buttonBox}>
+    <aside className="page__aside">
+      <div className="flex flex-col h-full gap-3">
+        {/* 검색창 UI */}
+        <SearchBar placeholder="검색어를 입력하세요." />
+        {/* Add New Page Button UI */}
         <Button
-          variant={"outline"}
-          className="w-full text-orange-500 border-orange-400 hover:bg-orange-50 hover:text-orange-500"
-          onClick={onCreate}
+          className="text-[#E79057] bg-white border border-[#E79057] hover:bg-[#fff9f5]"
+          onClick={handleCreateTask}
         >
           Add New Page
         </Button>
-      </div>
-      <div className={styles.container__todos}>
-        <div className={styles.container__todos__label}>Your To Do</div>
-        {/* Is Todos */}
-        <div className={styles.container__todos__list}>
-          {todos &&
-            todos.map((item: any) => {
-              return (
-                <div
-                  className="flex items-center py-2 bg-[#f5f5f4] rounded-sm cursor-pointer"
-                  key={item.id}
-                >
-                  <Dot className="mr-1 text-green-400"></Dot>
-                  <span className="text-sm">
-                    {item.title === "" ? "제목 없음" : item.title}
-                  </span>
-                </div>
-              );
-            })}
+        {/* Task 목록 */}
+        <div className="flex flex-col mt-2 gap-4">
+          <small className="text-sm font-medium leading-none text-[#a6a6a6]">
+            <span className="text-neutral-700">seyun0714</span>님의 TASK
+          </small>
+          <ul className="flex flex-col">
+            {/* Supabase에서 우리가 생성한 DB가 없을 경우 뜸 */}
+            <li className="bg-[#f5f5f5] min-h-9 flex items-center gap-2 py-2 px-[10px] rounded-sm text-sm text-neutral-400">
+              <div className="h-[6px] w-[6px] rounded-full bg-neutral-400"></div>
+              등록된 Task가 없습니다.
+            </li>
+          </ul>
         </div>
       </div>
-    </div>
+    </aside>
   );
 }
 
