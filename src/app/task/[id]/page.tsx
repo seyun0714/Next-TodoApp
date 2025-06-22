@@ -1,7 +1,6 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
-import { supabase } from "@/utils/supabase/client";
+import { useEffect, useState } from "react";
 import { nanoid } from "nanoid";
 import { toast } from "sonner";
 // scss
@@ -13,18 +12,30 @@ import { ChevronLeft } from "lucide-react";
 // type
 import { Task, Board } from "@/types/index";
 // hook
-import { useCreateBoard } from "@/hooks/apis";
+import { useCreateBoard, useGetTask } from "@/hooks/apis";
 import Image from "next/image";
 
 function TaskPage() {
   const router = useRouter();
-  const id = useParams();
+  const { id } = useParams();
+
+  const { task } = useGetTask(Number(id));
+
   const createBoard = useCreateBoard();
 
   const [title, setTitle] = useState<string>("");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [boards, setBoards] = useState<Board[]>([]);
+
+  useEffect(() => {
+    if (task) {
+      setTitle(task.title || "");
+      setStartDate(task.start_date ? new Date(task.start_date) : undefined);
+      setEndDate(task.end_date ? new Date(task.end_date) : undefined);
+      setBoards(task.boards);
+    }
+  }, [task]);
 
   // Add new board 버튼 클릭 시
   const handleAddBoard = () => {
@@ -41,23 +52,7 @@ function TaskPage() {
     createBoard(Number(id), "boards", newBoards);
   };
 
-  const handleSave = async () => {
-    // const { data, error, status } = await supabase
-    //   .from("todos")
-    //   .update({
-    //     title: title,
-    //   })
-    //   .eq("id", pathname.split("/")[2]);
-    // if (error) {
-    //   toast.error("저장 실패");
-    // }
-    // if (status === 204) {
-    //   toast.success("저장 완료");
-    //   getData();
-    //   // 상태 변경 함수
-    //   setSidebarState("updated");
-    // }
-  };
+  const handleSave = () => {};
 
   return (
     <>
@@ -84,6 +79,7 @@ function TaskPage() {
           <input
             className={styles.header__top__input}
             type="text"
+            defaultValue={task?.title}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Enter Title Here!"
@@ -99,8 +95,8 @@ function TaskPage() {
         <div className={styles.header__bottom}>
           {/* 캘린더 + add new board 버튼 섹션 */}
           <div className="flex items-center gap-5">
-            <LabelDatePicker label="From" />
-            <LabelDatePicker label="To" />
+            <LabelDatePicker label="From" value={startDate} />
+            <LabelDatePicker label="To" value={endDate} />
           </div>
           <Button
             className="text-white bg-[#E79057] hover:bg-[#E79057] hover:ring-1 hover:ring-[#E79057] hover:ring-offset-1 active:bg-[#D5753D] hover:shadow-lg"
@@ -114,7 +110,7 @@ function TaskPage() {
         {boards.length !== 0 ? (
           <div className={styles.body__isData}>
             {boards.map((board: Board) => {
-              return <BoardCard key={board.id} />;
+              return <BoardCard key={board.id} board={board} />;
             })}
           </div>
         ) : (

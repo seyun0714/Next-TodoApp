@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
-import { supabase } from "@/utils/supabase";
+import { useParams } from "next/navigation";
 import { toast } from "sonner";
+import { taskAtom } from "@/store/atoms";
+import { useAtomValue } from "jotai";
+// component
 import MDEditor from "@uiw/react-md-editor";
-import styles from "./MarkdownDialog.module.scss";
-// shadcn UI
 import {
   Dialog,
   DialogContent,
@@ -15,175 +15,138 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  LabelDatePicker,
+  Button,
+  Checkbox,
+  Separator,
 } from "@/components/ui";
-import { Button } from "@/components/ui";
-import { Checkbox } from "@/components/ui";
-import { Separator } from "@/components/ui";
-// component
-import LabelCalendar from "../calendar/LabelCalendar";
-
-interface Todo {
-  id: number;
-  title: string;
-  start_date: string | Date;
-  end_date: string | Date;
-  contents: BoardContent[];
-}
-
-interface BoardContent {
-  boardId: string | number;
-  isCompleted: boolean;
-  title: string;
-  startDate: string | Date;
-  endDate: string | Date;
-  content: string;
-}
+// type
+import { Task, Board } from "@/types";
+// hook
+import { useCreateBoard, useGetTask } from "@/hooks/apis";
 
 interface Props {
-  data: BoardContent;
-  updateBoards: () => void;
+  children: React.ReactNode;
+  board: Board;
 }
 
-function MarkdownDialog({ data, updateBoards }: Props) {
-  const pathname = usePathname();
-  const [open, setOpen] = useState<boolean>(false);
-  const [title, setTitle] = useState<string>("");
+function MarkdownDialog({ board, children }: Props) {
+  const { id } = useParams();
+  const updateBoard = useCreateBoard();
+  const task = useAtomValue(taskAtom);
+
+  // 해당 컴포넌트 내에서 사용되는 상태값
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
-  const [startDate, setStartDate] = useState<Date | string | undefined>(
-    new Date()
-  );
-  const [endDate, setEndDate] = useState<Date | string | undefined>(new Date());
+  const [title, setTitle] = useState<string>("");
+  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
+  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   const [content, setContent] = useState<string | undefined>(
     "**Hello, World!**"
   );
 
-  // ==================================================================================
+  const initState = () => {
+    setIsCompleted(board.isCompleted || false);
+    setTitle(board.title || "");
+    setStartDate(board.startDate ? new Date(board.startDate) : undefined);
+    setEndDate(board.endDate ? new Date(board.endDate) : undefined);
+    setContent(board.content || "**Hello, World!**");
+  };
 
-  // useEffect(() => {
-  //   if (data) {
-  //     setTitle(data.title);
-  //     setStartDate(data.startDate);
-  //     setEndDate(data.endDate);
-  //     setContent(data.content);
-  //     setIsCompleted(data.isCompleted);
-  //   }
-  // }, []);
+  useEffect(() => {
+    initState();
+  }, [board]);
 
-  // supabase에 저장
-  const onSubmit = async (id: string | number) => {
-    console.log(id);
-    if (!title || !startDate || !endDate || !content) {
-      toast.error("기입되지 않은 항목이 있습니다.");
+  // 다이얼로그 닫기
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    initState();
+  };
+
+  // 등록 버튼 클릭 시
+  const handleSubmit = async (boardId: string) => {
+    if (!title || !content) {
+      toast.error("제목과 콘텐트는 필수값 입니다.");
       return;
-    } else {
-      // supabase 데이터베이스에 연동
-      let { data: todos } = await supabase.from("todos").select("*");
-      if (todos !== null) {
-        todos.forEach(async (item: Todo) => {
-          if (item.id === Number(pathname.split("/")[2])) {
-            item.contents.forEach((element: BoardContent) => {
-              if (element.boardId === id) {
-                element.title = title;
-                element.startDate = startDate;
-                element.endDate = endDate;
-                element.content = content;
-              } else {
-                return;
-              }
-            });
-          }
-          const { data, error, status } = await supabase
-            .from("todos")
-            .update([{ contents: item.contents }])
-            .eq("id", pathname.split("/")[2]);
-          if (error) {
-            console.error(error);
-            toast.error("오류 발생");
-          }
-          if (status === 204) {
-            toast.success("수정 완료");
-
-            // 등록 후 조건 초기화
-            setOpen(false);
-            updateBoards();
-          }
-        });
-      } else return;
+    }
+    try {
+      // boards에서 선택한 board를 찾고 수정된 값으로 업데이트
+      const newBoards = task?.boards.map((board: Board) => {
+        if (board.id === boardId) {
+          return {
+            ...board,
+            isCompleted,
+            title,
+            startDate,
+            endDate,
+            content,
+          };
+        }
+        return board;
+      });
+      await updateBoard(Number(id), "boards", newBoards);
+      handleCloseDialog();
+    } catch (error) {
+      toast.error("네트워크 오류");
+      console.error(error);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      {data.title ? (
-        <DialogTrigger asChild>
-          <Button
-            variant={"ghost"}
-            className="font-normal text-gray-400 hover:text-gray-500 cursor-pointer"
-          >
-            Update Contents
-          </Button>
-        </DialogTrigger>
-      ) : (
-        <DialogTrigger asChild>
-          <Button
-            variant={"ghost"}
-            className="font-normal text-gray-400 hover:text-gray-500 cursor-pointer"
-          >
-            Add Contents
-          </Button>
-        </DialogTrigger>
-      )}
-
-      <DialogContent className="min-w-fit">
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            <div className={styles.dialog__titleBox}>
-              <Checkbox className="w-5 h-5" />
+            <div className="flex items-center justify-start gap-2">
+              <Checkbox
+                className="w-5 min-w-5 h-5"
+                checked={isCompleted}
+                onCheckedChange={(checked) => {
+                  if (typeof checked === "boolean") setIsCompleted(checked);
+                }}
+              />
               <input
                 type="text"
-                placeholder="Write a title for your board."
-                className={styles.dialog__titleBox__title}
-                defaultValue={data.title ? data.title : title}
+                placeholder="게시물의 제목을 입력하세요."
+                className="w-full text-xl outline-none bg-transparent"
+                value={title}
                 onChange={(event) => setTitle(event.target.value)}
               />
             </div>
           </DialogTitle>
-          <div className={styles.dialog__calendarBox}>
-            <LabelCalendar label="From" handleDate={setStartDate} />
-            <LabelCalendar label="To" handleDate={setEndDate} />
-          </div>
-          <Separator />
-          <div className={styles.dialog__markdown} data-color-mode="light">
-            <MDEditor
-              height={100 + "%"}
-              defaultValue={data.content ? data.content : content}
-              value={content}
-              onChange={setContent}
-            />
-          </div>
+          <DialogDescription>
+            마크다운 에디터를 사용하여 Task Board를 꾸며보세요.
+          </DialogDescription>
         </DialogHeader>
+        {/* 캘린더 박스 */}
+        <div className="flex items-center gap-5">
+          <LabelDatePicker
+            label="From"
+            value={startDate}
+            onChange={setStartDate}
+          />
+          <LabelDatePicker label="To" value={endDate} onChange={setEndDate} />
+        </div>
+        <Separator />
+        {/* 마크다운 에디터 영역 */}
+        <MDEditor height={320 + "px"} value={content} onChange={setContent} />
+
         <DialogFooter>
-          <div className={styles.dialog__buttonBox}>
-            <DialogClose asChild>
-              <Button
-                variant={"ghost"}
-                className="font-normal text-gray-400 hover:bg-gray-50 hover:text-gray-500 "
-              >
-                Cancel
-              </Button>
-            </DialogClose>
-            <Button
-              type="submit"
-              className="font-normal border-orange-500 bg-orange-400 text-white hover:bg-orange-400 hover:text-white"
-              onClick={() => onSubmit(data.boardId)}
-            >
-              Done
-            </Button>
-          </div>
+          <DialogClose asChild>
+            <Button variant={"outline"}>취소</Button>
+          </DialogClose>
+          <Button
+            type="submit"
+            className="font-normal border-orange-500 bg-orange-400 text-white hover:bg-orange-400 hover:text-white"
+            onClick={() => handleSubmit(board.id)}
+          >
+            등록
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-export default MarkdownDialog;
+export { MarkdownDialog };

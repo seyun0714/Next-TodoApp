@@ -18,7 +18,7 @@ function useCreateBoard() {
         })
         .eq("id", taskId)
         .select();
-
+      console.log(status);
       if (data && status === 200) {
         toast.success("Board 생성됨");
       }
