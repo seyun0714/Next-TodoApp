@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR } from "next/font/google";
 import { Toaster } from "@/components/ui";
+import { SideNavigation } from "@/components/common";
 import "@/styles/globals.css";
 import "@/styles/main.scss";
-import SideNavigation from "@/components/common/navigation/SideNavigation";
 
 const NOTO_SANS_KR = Noto_Sans_KR({ subsets: ["latin"] });
 

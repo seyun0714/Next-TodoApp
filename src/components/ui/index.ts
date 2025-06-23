@@ -1,3 +1,16 @@
+export {
+  AlertDialog,
+  AlertDialogPortal,
+  AlertDialogOverlay,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "./dialog/alert-dialog";
 export { Button, buttonVariants } from "./button/button";
 export { Calendar } from "./calendar/calendar";
 export {

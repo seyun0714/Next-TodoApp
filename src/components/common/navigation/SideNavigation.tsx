@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 // hook
-import { useGetTasks, useCreateTask } from "@/hooks/apis";
+import { useGetTasks, useCreateTask, useSearch } from "@/hooks/apis";
 // component
 import { Button, SearchBar } from "@/components/ui";
 import { useParams, useRouter } from "next/navigation";
@@ -12,6 +12,8 @@ function SideNavigation() {
   const router = useRouter();
   const { tasks, getTasks } = useGetTasks();
   const { id } = useParams();
+  const { search } = useSearch();
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   // getTasks는 컴포넌트 렌더링 시 한번만 호출되어야 하므로 useEffect로 호출
   useEffect(() => {
@@ -21,11 +23,28 @@ function SideNavigation() {
   // Task 생성
   const handleCreateTask = useCreateTask();
 
+  const handleSearchTermChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleSearch = async (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      // useSearch 훅 사용
+      search(searchTerm);
+    }
+  };
+
   return (
     <aside className="page__aside">
       <div className="flex flex-col h-full gap-3">
         {/* 검색창 UI */}
-        <SearchBar placeholder="검색어를 입력하세요." />
+        <SearchBar
+          placeholder="검색어를 입력하세요."
+          onChange={handleSearchTermChange}
+          onKeyDown={handleSearch}
+        />
         {/* Add New Page Button UI */}
         <Button
           className="text-[#E79057] bg-white border border-[#E79057] hover:bg-[#fff9f5]"
@@ -80,4 +99,4 @@ function SideNavigation() {
   );
 }
 
-export default SideNavigation;
+export { SideNavigation };

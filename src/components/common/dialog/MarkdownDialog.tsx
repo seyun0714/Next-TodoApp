@@ -21,7 +21,7 @@ import {
   Separator,
 } from "@/components/ui";
 // type
-import { Task, Board } from "@/types";
+import { Board } from "@/types";
 // hook
 import { useCreateBoard, useGetTask } from "@/hooks/apis";
 
@@ -34,6 +34,7 @@ function MarkdownDialog({ board, children }: Props) {
   const { id } = useParams();
   const updateBoard = useCreateBoard();
   const task = useAtomValue(taskAtom);
+  const { getTask } = useGetTask(Number(id));
 
   // 해당 컴포넌트 내에서 사용되는 상태값
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
@@ -55,7 +56,7 @@ function MarkdownDialog({ board, children }: Props) {
 
   useEffect(() => {
     initState();
-  }, [board]);
+  }, [isDialogOpen]);
 
   // 다이얼로그 닫기
   const handleCloseDialog = () => {
@@ -86,6 +87,7 @@ function MarkdownDialog({ board, children }: Props) {
       });
       await updateBoard(Number(id), "boards", newBoards);
       handleCloseDialog();
+      getTask();
     } catch (error) {
       toast.error("네트워크 오류");
       console.error(error);
